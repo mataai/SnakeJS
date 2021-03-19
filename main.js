@@ -1,11 +1,23 @@
 var area = document.getElementById("canvas");
 var ctx = area.getContext("2d");
 ctx.moveTo(0, 0);
+var pixelSize = 30;
+
+function gcd_two_numbers(x, y) {
+    x = Math.abs(x);
+    y = Math.abs(y);
+    while (y) {
+        var t = y;
+        y = x % y;
+        x = t;
+    }
+    return x;
+}
+
 function resizeCanvas() {
     console.log("resize");
     //Gets the devicePixelRatio
-    var pixelRatio = window.devicePixelRatio * 2;
-    console.log(pixelRatio);
+    var pixelRatio = 2;;
     //The viewport is in portrait mode, so var width should be based off viewport WIDTH
     if (window.innerHeight > window.innerWidth) {
         //Makes the canvas 100% of the viewport width
@@ -16,13 +28,14 @@ function resizeCanvas() {
         //Makes the canvas 100% of the viewport height
         var width = window.innerHeight;
     }
-
     //This is done in order to maintain the 1:1 aspect ratio, adjust as needed
     var height = width * (window.innerHeight / window.innerWidth);
     area.width = width * pixelRatio;
     area.height = height * pixelRatio;
     gameWidth = area.width;
     gameHeight = area.height;
+    pixelSize = gcd_two_numbers(gameHeight, gameWidth) * 15
+    try { moveEgg(); } catch (e) { }
 }
 window.addEventListener('resize', () => {
     resizeCanvas()
@@ -36,7 +49,6 @@ var lastdirection = directions.UP;
 
 
 var oneChangePerTick = false;
-var pixelSize = 30;
 var rendersPerTick = 5;
 var renderCount = 0;
 
@@ -44,7 +56,7 @@ var renderCount = 0;
 
 var stopped = true;
 var points = 0;
-var snake = { x: getPixelCompatibleCoords(gameWidth / 2), y: getPixelCompatibleCoords(gameHeight / 2), length: 1, positions: [] };
+var snake = { x: getPixelCompatibleCoords(gameWidth), y: getPixelCompatibleCoords(gameHeight), length: 1, positions: [] };
 var egg = { x: getPixelCompatibleCoords(getRandomInt(gameWidth)), y: getPixelCompatibleCoords(getRandomInt(gameHeight)) }
 
 function getRandomInt(max) { return Math.random() * Math.floor(max); }
@@ -109,11 +121,25 @@ function reset() {
     egg = { x: getPixelCompatibleCoords(getRandomInt(gameWidth)), y: getPixelCompatibleCoords(getRandomInt(gameHeight)) }
 }
 
+function checkOutsideBounds({ x, y }) {
+    if (y + pixelSize > gameHeight || y < 0 || x + pixelSize > gameWidth || x < 0)
+        return true;
+    return false;
+}
+
 function die() {
     if (document.getElementById("menu").style.display == "none") {
         stopped = true;
         toggleMenu();
     }
+}
+
+function moveEgg() {
+
+    egg.x = getPixelCompatibleCoords(getRandomInt(gameWidth))
+    egg.y = getPixelCompatibleCoords(getRandomInt(gameHeight))
+    if (checkOutsideBounds(egg))
+        moveEgg();
 }
 
 function drawEgg() {
@@ -138,7 +164,6 @@ function main() {
     oneChangePerTick = false;
     if (stopped)
         return;
-    ctx.clearRect(0, 0, area.width, area.height);
     snake.positions.push({ x: snake.x, y: snake.y })
     switch (lastdirection) {
         case directions.BOTTOM:
@@ -159,25 +184,23 @@ function main() {
         points += 1;
         snake.length += 1;
         document.getElementById("score").innerHTML = "Points: " + points
-        egg.x = getPixelCompatibleCoords(getRandomInt(gameWidth))
-        egg.y = getPixelCompatibleCoords(getRandomInt(gameHeight))
+        moveEgg();
     }
     if (snake.positions.length > snake.length)
         snake.positions.shift();
-    if (snake.y > gameHeight || (snake.y) < 0 || (snake.x) > gameWidth || (snake.x) < 0)
+    if (checkOutsideBounds(snake))
         die();
 }
 
 function render() {
-    console.log("render");
+    ctx.clearRect(0, 0, area.width, area.height);
     drawEgg();
     drawSnake(snake);
 }
 
 
 try {
-
-    var renderTimer = setInterval(render, 5);
+    var renderTimer = setInterval(render, 3);
     var gameTimer = setInterval(main, 100 - (snake.length * 5));
 
 } catch (e) { console.log(e); }
