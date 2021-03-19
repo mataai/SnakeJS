@@ -3,6 +3,11 @@ var ctx = area.getContext("2d");
 ctx.moveTo(0, 0);
 var pixelSize = 30;
 
+if (localStorage.getItem("points") == null)
+    localStorage.setItem("points", 0)
+document.getElementById("highscore").innerHTML = "Highscore: " + localStorage.getItem("points")
+
+
 function gcd_two_numbers(x, y) {
     x = Math.abs(x);
     y = Math.abs(y);
@@ -15,20 +20,13 @@ function gcd_two_numbers(x, y) {
 }
 
 function resizeCanvas() {
-    console.log("resize");
-    //Gets the devicePixelRatio
     var pixelRatio = 2;;
-    //The viewport is in portrait mode, so var width should be based off viewport WIDTH
     if (window.innerHeight > window.innerWidth) {
-        //Makes the canvas 100% of the viewport width
         var width = window.innerWidth;
     }
-    //The viewport is in landscape mode, so var width should be based off viewport HEIGHT
     else {
-        //Makes the canvas 100% of the viewport height
         var width = window.innerHeight;
     }
-    //This is done in order to maintain the 1:1 aspect ratio, adjust as needed
     var height = width * (window.innerHeight / window.innerWidth);
     area.width = width * pixelRatio;
     area.height = height * pixelRatio;
@@ -51,7 +49,6 @@ var lastdirection = directions.UP;
 var oneChangePerTick = false;
 var rendersPerTick = 5;
 var renderCount = 0;
-
 
 
 var stopped = true;
@@ -103,7 +100,6 @@ document.getElementById("playbutton").onclick = () => {
     stopped = false;
     reset();
     toggleMenu();
-
 }
 
 function toggleMenu() {
@@ -132,10 +128,12 @@ function die() {
         stopped = true;
         toggleMenu();
     }
+    if (localStorage.getItem("points") < points)
+        localStorage.setItem("points", points)
+    document.getElementById("highscore").innerHTML = "Highscore: " + localStorage.getItem("points")
 }
 
 function moveEgg() {
-
     egg.x = getPixelCompatibleCoords(getRandomInt(gameWidth))
     egg.y = getPixelCompatibleCoords(getRandomInt(gameHeight))
     if (checkOutsideBounds(egg))
