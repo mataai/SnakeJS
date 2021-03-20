@@ -1,26 +1,25 @@
 var area = document.getElementById("canvas");
 var ctx = area.getContext("2d");
-ctx.moveTo(0, 0);
-var pixelSize = 30;
-
+var pixelSize = 0;
 if (localStorage.getItem("points") == null)
     localStorage.setItem("points", 0)
 document.getElementById("highscore").innerHTML = "Highscore: " + localStorage.getItem("points")
 
 
-function gcd_two_numbers(x, y) {
-    x = Math.abs(x);
-    y = Math.abs(y);
-    while (y) {
-        var t = y;
-        y = x % y;
-        x = t;
+function getSCM(a, b) {
+    max = gameWidth <= gameHeight ? gameWidth / 10 : gameHeight / 10;
+    let value = 1;
+    let output = []
+    while (value <= max) {
+        if ((a / value) % 1 == 0 && (b / value) % 1 == 0)
+            output.push(value)
+        value += 1;
     }
-    return x;
+    return output;
 }
 
 function resizeCanvas() {
-    var pixelRatio = 2;;
+    var pixelRatio = 2;
     if (window.innerHeight > window.innerWidth) {
         var width = window.innerWidth;
     }
@@ -32,15 +31,37 @@ function resizeCanvas() {
     area.height = height * pixelRatio;
     gameWidth = area.width;
     gameHeight = area.height;
-    pixelSize = gcd_two_numbers(gameHeight, gameWidth) * 15
-    try { moveEgg(); } catch (e) { }
+    pixelSize = getPixelSize();
+    pixelSize = getPixelCompatibleCoords(Math.floor(getPixelSize()));
+    try {
+        moveEgg();
+        snake.x = getPixelCompatibleCoords(snake.x);
+        snake.y = getPixelCompatibleCoords(snake.y)
+    } catch (e) { }
 }
+
 window.addEventListener('resize', () => {
     resizeCanvas()
 })
+
+function getPixelSize() {
+    let checker = gameWidth <= gameHeight ? gameWidth : gameHeight;
+    checker = checker / 50;
+    let list = getSCM(gameWidth, gameHeight);
+    console.log(list);
+    console.log(checker);
+    let last = list[0]
+    for (const item of list) {
+        if (Math.abs(checker - last) > Math.abs(checker - item))
+            last = item
+    }
+    if ((checker - last) < checker || (checker - last) > (checker * 2))
+        return checker
+
+    return last;
+}
+
 resizeCanvas();
-ctx.fillStyle = "#000";
-ctx.fillRect(0, 0, area.width, area.height);
 
 var directions = { "LEFT": "LEFT", "UP": "UP", "RIGHT": "RIGHT", "BOTTOM": "BOTTOM" };
 var lastdirection = directions.UP;
@@ -48,8 +69,6 @@ var lastdirection = directions.UP;
 
 var oneChangePerTick = false;
 var rendersPerTick = 5;
-var renderCount = 0;
-
 
 var stopped = true;
 var points = 0;
@@ -59,7 +78,7 @@ var egg = { x: getPixelCompatibleCoords(getRandomInt(gameWidth)), y: getPixelCom
 function getRandomInt(max) { return Math.random() * Math.floor(max); }
 
 function getPixelCompatibleCoords(value) {
-    return Math.ceil(value / pixelSize) * pixelSize
+    return Math.floor(Math.ceil(value / pixelSize) * pixelSize)
 }
 
 document.addEventListener('keydown', function (event) {
